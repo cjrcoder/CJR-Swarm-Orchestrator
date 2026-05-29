@@ -12,7 +12,6 @@ import os
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
-from uuid import UUID, uuid4
 
 from pydantic import (
     BaseModel,
@@ -73,7 +72,7 @@ class PipelineStage(str, Enum):
 class AtomicTask(BaseModel):
     """A single, indivisible unit of work produced by the Planner agent."""
 
-    id: UUID = Field(default_factory=uuid4, description="Unique task identifier.")
+    id: str = Field(default_factory=lambda: os.urandom(4).hex(), description="Unique task identifier.")
     title: str = Field(..., description="Short, descriptive task title.")
     description: str = Field(..., description="Detailed description of what must be done.")
     priority: TaskPriority = Field(
@@ -90,7 +89,7 @@ class AtomicTask(BaseModel):
         ...,
         description="Criteria that must be met for the task to be considered complete.",
     )
-    dependencies: list[UUID] = Field(
+    dependencies: list[str] = Field(
         default_factory=list,
         description="IDs of tasks that must complete before this one.",
     )
@@ -159,7 +158,7 @@ class CodeFile(BaseModel):
 class CodePayload(BaseModel):
     """Bundle of code files produced by the Implementer agent for one plan."""
 
-    plan_id: UUID = Field(..., description="ID of the originating ImplementationPlan.")
+    plan_id: str = Field(..., description="ID of the originating ImplementationPlan.")
     files: list[CodeFile] = Field(
         ...,
         min_length=1,
@@ -214,7 +213,7 @@ class TestResult(BaseModel):
 class QAReport(BaseModel):
     """Aggregated QA report produced by the QA Reviewer agent."""
 
-    payload_id: UUID = Field(
+    payload_id: str = Field(
         ...,
         description="ID linking back to the CodePayload under review.",
     )
@@ -314,8 +313,8 @@ class GitPushResult(BaseModel):
 class ActionState(BaseModel):
     """Mutable state object that tracks the entire pipeline run."""
 
-    pipeline_id: UUID = Field(
-        default_factory=uuid4,
+    pipeline_id: str = Field(
+        default_factory=lambda: os.urandom(8).hex(),
         description="Unique identifier for this pipeline execution.",
     )
     current_stage: PipelineStage = Field(
