@@ -86,24 +86,7 @@ class PlannerAgent:
 
         Returns a fully-validated :class:`ImplementationPlan` instance.
         """
-        schema_hint = textwrap.dedent("""\
-            {
-              "plan_id": "<uuid string>",
-              "feature_objective": "<string>",
-              "architecture_notes": "<string>",
-              "tech_stack": ["<string>", ...],
-              "tasks": [
-                {
-                  "task_id": "<uuid string>",
-                  "title": "<short title>",
-                  "description": "<detailed description>",
-                  "acceptance_criteria": ["<criterion>", ...],
-                  "priority": <1-5 integer, 1=highest>,
-                  "estimated_complexity": "low | medium | high"
-                }
-              ]
-            }
-        """)
+        schema_str = json.dumps(ImplementationPlan.model_json_schema())
 
         system_prompt = textwrap.dedent(f"""\
             You are a senior software architect tasked with creating
@@ -114,12 +97,8 @@ class PlannerAgent:
             2. Each task must be independently implementable and testable.
             3. Provide architecture notes and a tech stack recommendation.
             4. Return ONLY strict JSON — no commentary, no markdown.
-            5. The JSON MUST match this exact schema:
-
-            {schema_hint}
-
-            Generate unique UUID-v4 strings for plan_id and each task_id.
         """)
+        system_prompt += f"\n\nYou must return ONLY valid JSON that strictly adheres to this JSON schema:\n{schema_str}"
 
         user_prompt = (
             f"Create a detailed implementation plan for the following "
@@ -181,22 +160,7 @@ class ImplementerAgent:
 
         Returns a validated :class:`CodePayload` instance.
         """
-        schema_hint = textwrap.dedent("""\
-            {
-              "payload_id": "<uuid string>",
-              "plan_id": "<the plan_id you received>",
-              "files": [
-                {
-                  "filepath": "<relative/path.py>",
-                  "language": "python",
-                  "content": "<full file source code as a string>",
-                  "description": "<what this file does>"
-                }
-              ],
-              "entry_point": "<main entry point file>",
-              "dependencies": ["<pip package>", ...]
-            }
-        """)
+        schema_str = json.dumps(CodePayload.model_json_schema())
 
         tasks_block = "\n".join(
             f"  {i + 1}. [complexity={t.estimated_complexity}/10] {t.title}\n"
@@ -213,13 +177,8 @@ class ImplementerAgent:
             1. Follow PEP 8.  Use type hints everywhere.
             2. Write clean, well-documented, fully working code.
             3. Return ONLY strict JSON — no markdown, no commentary.
-            4. The JSON MUST match this exact schema:
-
-            {schema_hint}
-
-            Generate a unique UUID-v4 for payload_id.
-            Set plan_id to the value provided in the plan.
         """)
+        system_prompt += f"\n\nYou must return ONLY valid JSON that strictly adheres to this JSON schema:\n{schema_str}"
 
         user_prompt = textwrap.dedent(f"""\
             IMPLEMENTATION PLAN
@@ -304,30 +263,7 @@ class QAReviewerAgent:
 
         Returns a validated :class:`QAReport` instance.
         """
-        schema_hint = textwrap.dedent("""\
-            {
-              "report_id": "<uuid string>",
-              "payload_id": "<the payload_id from the code payload>",
-              "overall_quality": <integer 1-10>,
-              "issues": [
-                {
-                  "severity": "critical | major | minor | info",
-                  "location": "<file:line or description>",
-                  "message": "<what is wrong>",
-                  "suggestion": "<how to fix>"
-                }
-              ],
-              "test_cases": [
-                {
-                  "name": "<test function name>",
-                  "description": "<what it verifies>",
-                  "code": "<full pytest test code>"
-                }
-              ],
-              "approved": <true | false>,
-              "summary": "<executive summary of the review>"
-            }
-        """)
+        schema_str = json.dumps(QAReport.model_json_schema())
 
         files_block = "\n\n".join(
             f"--- {f.filepath} ---\n{f.content}"
@@ -351,13 +287,8 @@ class QAReviewerAgent:
             3. Set "approved" to true ONLY if overall_quality >= 7 and there
                are zero critical issues.
             4. Return ONLY strict JSON — no markdown, no commentary.
-            5. The JSON MUST match this schema:
-
-            {schema_hint}
-
-            Generate a unique UUID-v4 for report_id.
-            Set payload_id to the value from the code payload.
         """)
+        system_prompt += f"\n\nYou must return ONLY valid JSON that strictly adheres to this JSON schema:\n{schema_str}"
 
         user_prompt = textwrap.dedent(f"""\
             IMPLEMENTATION PLAN
