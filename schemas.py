@@ -401,7 +401,7 @@ class SwarmConfig(BaseModel):
         description="Base URL for the NVIDIA API.",
     )
     nvidia_model: str = Field(
-        default="deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+        default="meta/llama-3.3-70b-instruct",
         description="NVIDIA-hosted model identifier.",
     )
     gemini_model: str = Field(
@@ -409,7 +409,7 @@ class SwarmConfig(BaseModel):
         description="Gemini model identifier.",
     )
     llama_model: str = Field(
-        default="meta/llama-3.1-8b-instruct",
+        default="meta/llama-3.3-70b-instruct",
         description="Llama model identifier on NVIDIA.",
     )
     max_retries: int = Field(

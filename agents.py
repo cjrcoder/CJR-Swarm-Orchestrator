@@ -79,7 +79,7 @@ class PlannerAgent:
             base_url=config.nvidia_base_url,
             api_key=config.nvidia_api_key.get_secret_value(),
         )
-        self.model_name = "meta/llama-3.1-405b-instruct"
+        self.model_name = "meta/llama-3.3-70b-instruct"
 
     def generate_plan(self, feature_objective: str) -> ImplementationPlan:
         """Generate a structured implementation plan for *feature_objective*.
