@@ -71,13 +71,15 @@ def _extract_json(text: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 class PlannerAgent:
-    """Uses Gemini to decompose feature objectives into atomic implementation plans."""
+    """Uses NVIDIA Llama-3 to decompose feature objectives into atomic implementation plans."""
 
     def __init__(self, config: SwarmConfig) -> None:
         self._config = config
-        self._client = genai.Client(
-            api_key=config.gemini_api_key.get_secret_value(),
+        self._client = openai.OpenAI(
+            base_url=config.nvidia_base_url,
+            api_key=config.nvidia_api_key.get_secret_value(),
         )
+        self.model_name = "meta/llama-3.1-405b-instruct"
 
     def generate_plan(self, feature_objective: str) -> ImplementationPlan:
         """Generate a structured implementation plan for *feature_objective*.
@@ -130,11 +132,16 @@ class PlannerAgent:
         )
 
         try:
-            response = self._client.models.generate_content(
-                model=self._config.gemini_model,
-                contents=f"{system_prompt}\n\n{user_prompt}",
+            completion = self._client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.2,
             )
-            raw_text: str = response.text
+            raw_text = completion.choices[0].message.content or ""
             logger.debug("PlannerAgent raw response: %.500s", raw_text)
 
             data = _extract_json(raw_text)
