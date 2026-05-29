@@ -32,3 +32,11 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GH_PAT: ${{ secrets.GH_PAT }}
+          
+      - name: Force Commit and Push
+        run: |
+          git config user.name "CJRCODER"
+          git config user.email "cjrcoder@gmail.com"
+          git add .
+          git commit -m "feat(ai): autonomous system implementation" || echo "No changes to commit"
+          git push origin main
